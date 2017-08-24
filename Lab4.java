@@ -10,6 +10,162 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.StringTokenizer;
 
+class PQueue {
+	
+	private Animal[] Heap;
+	private int size;
+	private int maxsize;
+	
+	private static final int FRONT = 0;
+	
+	public PQueue(int maxsize)
+	{
+	    this.maxsize = maxsize;
+	    this.size = 0;
+	    Heap = new Animal[this.maxsize + 1];
+	    //Heap[0] = new Animal(Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE);
+	    
+	}
+	
+	public int getSize(){
+		return this.size;
+	}
+	
+	public Animal get(int i) {
+		return Heap[i];
+	}
+	
+	public boolean isEmpty() {
+		if(size==0)
+		{
+			return true;
+		}
+		else
+			return false;
+	}
+	
+	public double dist(int[] p) {
+		return Math.sqrt(p[0]*p[0] + p[1]*p[1]);
+	}
+
+	public void heapify(int i) {
+		int heapsize=size;
+		boolean flag=true;
+		
+		while(i<=(heapsize-1)/2 && flag==true)
+		{
+			int max=i;
+			int l=2*i;
+			int r=2*i+1;
+			if(l<=heapsize && Heap[l].TimeOfStart < Heap[i].TimeOfStart)
+			{
+				max=l;
+			}
+			if(r<=heapsize && Heap[r].TimeOfStart < Heap[max].TimeOfStart)
+			{
+				max=r;
+			}
+			if(max==i) {
+				if(l<=heapsize && Heap[l].Health > Heap[i].Health)
+				{
+					max=l;
+				}
+				if(r<=heapsize && Heap[r].Health > Heap[max].Health)
+				{
+					max=r;
+				}
+				if(max==i)
+				{
+					if(l<=heapsize && Heap[l] instanceof Herbivore && Heap[i] instanceof Carnivore)
+					{
+						max=l;
+					}
+					if(r<=heapsize && Heap[r] instanceof Herbivore && Heap[max] instanceof Carnivore)
+					{
+						max=r;
+					}
+					if(max==i) {
+						if(l<=heapsize && Heap[l] instanceof Herbivore && Heap[i] instanceof Herbivore && dist(Heap[l].Position) < dist(Heap[i].Position));
+						{
+							max=l;
+						}
+						if(r<=heapsize && Heap[r] instanceof Herbivore && Heap[max] instanceof Herbivore && dist(Heap[r].Position) < dist(Heap[max].Position));
+						{
+							max=r;
+						}
+						if(max==i) {
+							if(l<=heapsize && Heap[l] instanceof Carnivore && Heap[i] instanceof Carnivore && dist(Heap[l].Position) < dist(Heap[i].Position));
+							{
+								max=l;
+							}
+							if(r<=heapsize && Heap[r] instanceof Carnivore && Heap[max] instanceof Carnivore && dist(Heap[r].Position) < dist(Heap[max].Position));
+							{
+								max=r;
+							}
+						}
+					}
+				}
+			}
+			if(max!=i)
+			{
+				Animal temp=Heap[max];
+				Heap[max]=Heap[i];
+				Heap[i]=temp;
+				i=max;
+				//heap=heapify(heap,min);
+			}
+			else
+			{
+				flag=false;
+			}
+		}
+	}
+	
+    	
+	public void enqueue(Animal element)
+	    {
+	        Heap[++size] = element;
+	        //int current = size;
+	        //int parent = current / 2;
+	 
+	        heapify(FRONT);
+	        /*while(Heap[current].TimeOfStart > Heap[parent].TimeOfStart)
+	        {
+	            swap(current,parent);
+	            current = parent;
+	            parent = current / 2;
+	        }*/
+	    }
+	
+	public void Build_Heap()
+    {
+        for (int pos = (size / 2); pos >= 1; pos--)
+        {
+            heapify(pos);
+        }
+    }
+ 
+    public void dequeue()
+    {
+        //Teacher popped = Heap[FRONT];
+    	if(size==1)
+    	{
+    		//Heap[FRONT]=new Teacher(0,0,0);
+    		size--;
+    	}
+    	else
+    	{
+    		Heap[FRONT] = Heap[size];
+    		//Heap[size] = new Teacher(0,0,0);
+    		size--;
+    		heapify(FRONT);
+    	}
+        return;
+    }
+
+}
+
+
 abstract class Animal {
 	protected int TimeOfStart;
 	protected int Position[]=new int[2];
@@ -24,21 +180,69 @@ abstract class Animal {
 		Health=h;
 	}
 	
+	public double getDistance(int x, int y){
+		int xd=(this.Position[0]-x);
+		int yd=(this.Position[1]-y);
+		return Math.sqrt((xd*xd)+(yd*yd));
+	}
+	
+	public int[] getNewCoord(int[] dest, int distance) {
+		double tan=(dest[1]-this.Position[1]) / (dest[0]-this.Position[0]);
+		double cos=Math.sqrt(1/(1+tan*tan));
+		double sin=Math.sqrt(1-cos*cos);
+		
+		int newX1=(int) Math.round(this.Position[0] + (distance*cos));
+		int newY1=(int) Math.round(this.Position[1] + (distance*sin));
+		int newX2=(int) Math.round(this.Position[0] - (distance*cos));
+		int newY2=(int) Math.round(this.Position[1] - (distance*sin));
+		int[] ans=new int[2];
+		
+		if(this.getDistance(newX1,newY1) < this.getDistance(newX2,newY2))
+		{
+			ans[0]=newX1;
+			ans[1]=newY1;
+		}
+		else
+		{
+			ans[0]=newX2;
+			ans[1]=newY2;
+		}
+		
+		return ans;
+		
+	}
+	
 	public abstract void TakeTurn(Grassland[] grasslands, PQueue p) ;
 }
+
 
 class Herbivore extends Animal {
 	protected int maxGrassCap;
 	protected Grassland curr;
 	
+	
 	public Herbivore( int x, int y,int tStart, int h, int grass) {
 		super(tStart, x, y, h);
 		this.maxGrassCap=grass;
-		curr=null;
 	}
 	
-	public void TakeTurn(Grassland[] grasslands, Pqueue p) {
-		int size=PQueue.size();
+	
+	public Grassland isInGrassland(Grassland[] g) {
+		for(int i=0; i<2; i++)
+		{
+			if(Position[0] < g[i].getx() && Position[0]> (-1)*g[i].getx() && Position[1] < g[i].gety() && Position[1]> (-1)*g[i].gety())
+			{
+				return g[i];
+			}
+		}
+		return null;
+		
+	}
+	
+	
+	public void TakeTurn(Grassland[] grasslands, PQueue p) {
+		int size=p.getSize();
+		curr=isInGrassland(grasslands);
 		//To find the neighbouring grassland
 		Grassland neighbour;
 		for(int i=0;i<2; i++)
@@ -101,7 +305,16 @@ class Herbivore extends Animal {
 					if (prob<=65)//should i generate another random here???
 					{
 						//65% chance that herbivore moves towards nearest grassland
-						
+						Grassland nearest;
+						if(this.getDistance(grasslands[0].getx(), grasslands[0].gety()) < this.getDistance(grasslands[1].getx(), grasslands[1].gety())) 
+						{
+							nearest=grasslands[0];
+						}
+						else
+						{
+							nearest = grasslands[1];
+						}
+						int[] newCoord=
 					}
 					else
 					{
@@ -162,6 +375,7 @@ class Grassland {
 	}
 	
 }
+
 //A class World to run the simulation
 class World {
 	private PQueue Animals;
@@ -176,9 +390,10 @@ class World {
 	public void SimulateGame() {
 		int turns=0;
 		int time=0;
-		while(!Pqueue.isEmpty() && turns<TotTime)
+		while(!Animals.isEmpty() && turns<TotTime)
 		{
-			Animal a=Pqueue.dequeue();
+			Animal a=Animals.get(0);
+			Animals.dequeue();
 			a.TakeTurn();
 		}
 	}
