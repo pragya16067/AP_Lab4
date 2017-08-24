@@ -186,7 +186,7 @@ abstract class Animal {
 		return Math.sqrt((xd*xd)+(yd*yd));
 	}
 	
-	public int[] getNewCoord(int[] dest, int distance) {
+	public int[] getNewCoord(int[] dest, int distance, String s) {
 		double tan=(dest[1]-this.Position[1]) / (dest[0]-this.Position[0]);
 		double cos=Math.sqrt(1/(1+tan*tan));
 		double sin=Math.sqrt(1-cos*cos);
@@ -197,20 +197,38 @@ abstract class Animal {
 		int newY2=(int) Math.round(this.Position[1] - (distance*sin));
 		int[] ans=new int[2];
 		
-		if(this.getDistance(newX1,newY1) < this.getDistance(newX2,newY2))
+		if(s.equals("Towards"))
 		{
-			ans[0]=newX1;
-			ans[1]=newY1;
+			if(this.getDistance(newX1,newY1) < this.getDistance(newX2,newY2))
+			{
+				ans[0]=newX1;
+				ans[1]=newY1;
+			}
+			else
+			{
+				ans[0]=newX2;
+				ans[1]=newY2;
+			}
 		}
 		else
 		{
-			ans[0]=newX2;
-			ans[1]=newY2;
+			if(this.getDistance(newX1,newY1) > this.getDistance(newX2,newY2))
+			{
+				ans[0]=newX1;
+				ans[1]=newY1;
+			}
+			else
+			{
+				ans[0]=newX2;
+				ans[1]=newY2;
+			}
 		}
 		
 		return ans;
 		
 	}
+	
+	
 	
 	public abstract void TakeTurn(Grassland[] grasslands, PQueue p) ;
 }
@@ -244,7 +262,7 @@ class Herbivore extends Animal {
 		int size=p.getSize();
 		curr=isInGrassland(grasslands);
 		//To find the neighbouring grassland
-		Grassland neighbour;
+		Grassland neighbour=null;
 		for(int i=0;i<2; i++)
 		{
 			if(!grasslands[i].equals(curr))
@@ -268,20 +286,38 @@ class Herbivore extends Animal {
 		{
 			
 			int prob=random.nextInt(101);
-			if(prob<=50) //move to neighbouring grassland with 50% chance
+			if(prob<=50) //50% chance that it stays at its own position
 			{
-				if(curr!=null)//if the herbivore is in a grassland
-				{
-					this.Health=this.Health-25;
-				}
-				curr=neighbour;
-				this.eat();
+				///WHAT SHOULD WE RETURN HERE
+				return;
 			}
 			else
 			{
 				if (curr!=null)//If the herbivore is inside a grassland;
 				{
-					this.eat();
+					//Move 5 units towards the neighbouring grassland
+					int[] dest={neighbour.getx(),neighbour.gety()};
+					int[] newC=getNewCoord(dest, 5, "Towards");
+					this.Position[0]=newC[0];
+					this.Position[1]=newC[1];
+					this.Health=this.Health-25;
+					
+				}
+				else //If the herbivore is not inside any grassland then move to the nearest
+				{
+					Grassland nearest;
+					if(this.getDistance(grasslands[0].getx(), grasslands[0].gety()) < this.getDistance(grasslands[1].getx(), grasslands[1].gety())) 
+					{
+						nearest=grasslands[0];
+					}
+					else
+					{
+						nearest = grasslands[1];
+					}
+					int[] dest={nearest.getx(),nearest.gety()};
+					int[] newCoord = this.getNewCoord(dest, 5, "Towards");
+					Position[0]=newCoord[0];
+					Position[1]=newCoord[1];
 				}
 			}
 			return;
@@ -302,7 +338,7 @@ class Herbivore extends Animal {
 				else
 				{
 					prob = random.nextInt(101);
-					if (prob<=65)//should i generate another random here???
+					if (prob<=65)
 					{
 						//65% chance that herbivore moves towards nearest grassland
 						Grassland nearest;
@@ -314,15 +350,126 @@ class Herbivore extends Animal {
 						{
 							nearest = grasslands[1];
 						}
-						int[] newCoord=
+						int[] dest={nearest.getx(),nearest.gety()};
+						int[] newCoord = this.getNewCoord(dest, 5, "Towards");
+						Position[0]=newCoord[0];
+						Position[1]=newCoord[1];
 					}
 					else
 					{
 						//35% chance that herbivore moves away from nearest carnivore
-						
+						Carnivore nearest=null;
+						int min=Integer.MAX_VALUE;
+						for(int i=0; i<size; i++)
+						{
+							if(p.get(i) instanceof Carnivore)
+							{
+								if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+								{
+									nearest=(Carnivore) p.get(i);
+								}
+							}
+						}
+						int[] newCoord = this.getNewCoord(nearest.Position, 4, "Away");
+						Position[0]=newCoord[0];
+						Position[1]=newCoord[1];
 					}
 				}
 			}
+			
+			
+			else //The Herbivore is already inside a Grassland
+			{
+				if(curr.getGrassAvbl() >= this.maxGrassCap)
+				{
+					int prob=random.nextInt(101);
+					if(prob<=90)
+					{
+						//90% chance that Herbivore stays and eats its full capacity of grass 
+						curr.setGAvbl(curr.getGrassAvbl() - this.maxGrassCap);
+						//health increases by 50% of original value
+						this.Health = this.Health * 3 / 2;
+					}
+					else
+					{
+						prob=random.nextInt(101);
+						if(prob<=50)
+						{
+							//50% chance that it moves away from the carnivore
+							Carnivore nearest=null;
+							int min=Integer.MAX_VALUE;
+							for(int i=0; i<size; i++)
+							{
+								if(p.get(i) instanceof Carnivore)
+								{
+									if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+									{
+										nearest=(Carnivore) p.get(i);
+									}
+								}
+							}
+							int[] newCoord = this.getNewCoord(nearest.Position, 2, "Away");
+							Position[0]=newCoord[0];
+							Position[1]=newCoord[1];
+						}
+						else
+						{
+							int[] dest={neighbour.getx(),neighbour.gety()};
+							int[] newCoord = this.getNewCoord(dest, 3, "Towards");
+							Position[0]=newCoord[0];
+							Position[1]=newCoord[1];
+						}
+					}
+				}
+				else //Available grass is less than the Herbivore's capacity
+				{
+					int prob=random.nextInt(101);
+					if(prob < 20)
+					{
+						curr.setGAvbl(0);
+						//Increase health by 20% of original
+						this.Health = 6 / 5 * this.Health;
+					}
+					else
+					{
+						prob=random.nextInt(101);
+						if(prob <= 70)
+						{//70% chance that Herbivore moves away from nearest carnivore
+							Carnivore nearest=null;
+							int min=Integer.MAX_VALUE;
+							for(int i=0; i<size; i++)
+							{
+								if(p.get(i) instanceof Carnivore)
+								{
+									if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+									{
+										nearest=(Carnivore) p.get(i);
+									}
+								}
+							}
+							int[] newCoord = this.getNewCoord(nearest.Position, 4, "Away");
+							Position[0]=newCoord[0];
+							Position[1]=newCoord[1];
+						}
+						else
+						{
+							int[] dest={neighbour.getx(),neighbour.gety()};
+							int[] newCoord = this.getNewCoord(dest, 2, "Towards");
+							Position[0]=newCoord[0];
+							Position[1]=newCoord[1];
+						}
+					}
+				}
+				
+				//Code to check if the Herbivore has now moved to a new grassland now, and decrease health if that is the case
+				Grassland change=isInGrassland(grasslands);
+				if(!change.equals(curr))
+				{
+					this.Health=this.Health-25;
+					curr=change;
+				}
+			}
+			return;
 		}
 		
 	}
@@ -334,7 +481,7 @@ class Carnivore extends Animal {
 		super(tStart, x, y, h);
 	}
 	
-	public void TakeTurn() {
+	public void TakeTurn(Grassland[] grasslands, PQueue p) {
 		return;
 	}
 	
@@ -372,6 +519,10 @@ class Grassland {
 	
 	public int gety() {
 		return this.y;
+	}
+	
+	public boolean equals(Grassland g) {
+		return (x==g.x && y==g.y && r==g.r && GrassAvbl==g.GrassAvbl);
 	}
 	
 }
