@@ -16,14 +16,14 @@ class PQueue {
 	private int size;
 	private int maxsize;
 	
-	private static final int FRONT = 0;
+	private static final int FRONT = 1;
 	
 	public PQueue(int maxsize)
 	{
 	    this.maxsize = maxsize;
 	    this.size = 0;
 	    Heap = new Animal[this.maxsize + 1];
-	    //Heap[0] = new Animal(Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE);
+	    Heap[0] = new Herbivore(Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE);
 	    
 	}
 	
@@ -228,6 +228,17 @@ abstract class Animal {
 		
 	}
 	
+	public Grassland isInGrassland(Grassland[] g) {
+		for(int i=0; i<2; i++)
+		{
+			if(Position[0] < (g[i].getx()+g[i].getr()) && Position[0]> (g[i].getx()-g[i].getr()) && Position[1] < (g[i].gety()+g[i].getr()) && Position[1]> (g[i].gety()-g[i].getr()))
+			{
+				return g[i];
+			}
+		}
+		return null;
+		
+	}
 	
 	
 	public abstract void TakeTurn(Grassland[] grasslands, PQueue p) ;
@@ -244,19 +255,7 @@ class Herbivore extends Animal {
 		this.maxGrassCap=grass;
 	}
 	
-	
-	public Grassland isInGrassland(Grassland[] g) {
-		for(int i=0; i<2; i++)
-		{
-			if(Position[0] < g[i].getx() && Position[0]> (-1)*g[i].getx() && Position[1] < g[i].gety() && Position[1]> (-1)*g[i].gety())
-			{
-				return g[i];
-			}
-		}
-		return null;
-		
-	}
-	
+
 	
 	public void TakeTurn(Grassland[] grasslands, PQueue p) {
 		int size=p.getSize();
@@ -538,14 +537,14 @@ class World {
 		TotTurns=Tturn;
 	}
 	
-	public void SimulateGame() {
+	public void SimulateGame(Grassland[] g) {
 		int turns=0;
 		int time=0;
 		while(!Animals.isEmpty() && turns<TotTime)
 		{
 			Animal a=Animals.get(0);
 			Animals.dequeue();
-			a.TakeTurn();
+			a.TakeTurn(g,Animals);
 		}
 	}
 }
@@ -555,13 +554,13 @@ public class Lab4 {
 
 	public static void main(String[] args) throws IOException {
 		Reader.init(System.in);
-		System.out.println("Enter Total Final Time for Simulation:");
+		/*System.out.println("Enter Total Final Time for Simulation:");
 		int TotalTime=Reader.nextInt();
 		System.out.println("Enter x, y centre, radius and Grass Available for First Grassland:");
 		Grassland G1=new Grassland(Reader.nextInt(),Reader.nextInt(),Reader.nextInt(),Reader.nextInt());
 		System.out.println("Enter x, y centre, radius and Grass Available for Second Grassland:");
 		Grassland G2=new Grassland(Reader.nextInt(),Reader.nextInt(),Reader.nextInt(),Reader.nextInt());
-		
+		*/
 		System.out.println("Enter Health and Grass Capacity for Herbivores:");
 		int Hhealth=Reader.nextInt();
 		int HG=Reader.nextInt();
@@ -570,13 +569,28 @@ public class Lab4 {
 		System.out.println("Enter x, y position and timestamp for Second Herbivore:");
 		Herbivore H2=new Herbivore(Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Hhealth, HG);
 		
-		System.out.println("Enter Health and Grass Capacity for Carnivores:");
+		System.out.println("Enter Health for Carnivores:");
 		int Chealth=Reader.nextInt();
 		System.out.println("Enter x, y position and timestamp for First Carnivore:");
 		Carnivore C1=new Carnivore(Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Chealth);
 		System.out.println("Enter x, y position and timestamp for Second Carnivore:");
 		Carnivore C2=new Carnivore(Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Chealth);
 		
+		Animal[] animals={H1,H2,C1,C2};
+		//Grassland[] g={G1,G2};
+		PQueue p=new PQueue(5);
+		p.enqueue(animals[0]);
+		System.out.println(p.get(1).TimeOfStart);
+		p.enqueue(animals[1]);
+		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart);
+		p.enqueue(animals[2]);
+		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart);
+		p.enqueue(animals[3]);
+		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart+" "+p.get(4).TimeOfStart);
+		
+		Animal x=p.get(1);
+		p.dequeue();
+		System.out.println(x.TimeOfStart);
 		
 		System.out.println("The simulation begins");
 	}
