@@ -137,13 +137,6 @@ class PQueue {
 	        }*/
 	    }
 	
-	public void Build_Heap()
-    {
-        for (int pos = (size / 2); pos >= 1; pos--)
-        {
-            heapify(pos);
-        }
-    }
  
     public void dequeue()
     {
@@ -170,6 +163,7 @@ abstract class Animal {
 	protected int TimeOfStart;
 	protected int Position[]=new int[2];
 	protected int Health;
+	protected Grassland curr;
 	public Random random=new Random();
 	
 	public Animal(int tStart, int x, int y, int h)
@@ -247,7 +241,7 @@ abstract class Animal {
 
 class Herbivore extends Animal {
 	protected int maxGrassCap;
-	protected Grassland curr;
+	
 	
 	
 	public Herbivore( int x, int y,int tStart, int h, int grass) {
@@ -476,12 +470,154 @@ class Herbivore extends Animal {
 
 class Carnivore extends Animal {
 	
+	
 	public Carnivore( int x, int y,int tStart, int h) {
 		super(tStart, x, y, h);
 	}
 	
 	public void TakeTurn(Grassland[] grasslands, PQueue p) {
-		return;
+		int size=p.getSize();
+		curr=isInGrassland(grasslands);
+		//To find the neighbouring grassland
+		Grassland neighbour=null;
+		for(int i=0;i<2; i++)
+		{
+			if(!grasslands[i].equals(curr))
+			{
+				neighbour=grasslands[i];
+			}
+		}
+		
+		Boolean flag=true;
+		for(int i=0; i<size; i++)
+		{
+			if(p.get(i) instanceof Herbivore)
+			{
+				//There is still a Herbivore left
+				flag=false;
+				break;
+			}
+		}
+		
+		if(flag==true) //There is no herbivore left
+			return;
+		else //There is at least 1 Herbivore left
+		{
+			//if Herbivore is within 1 unit distance of Carnivore
+			int ctr=0;
+			for(int i=0; i<size; i++)
+			{
+				if(p.get(i) instanceof Herbivore)
+				{
+					if( this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) <= 1 )
+					{
+						ctr++;
+					}
+				}
+			}
+			
+			if(ctr==1)
+			{
+				//there is one herbivore that carnivore will kill and eat
+				for(int i=0; i<size; i++)
+				{
+					if(p.get(i) instanceof Herbivore)
+					{
+						this.Health = this.Health + 2*p.get(i).Health/3; //Carnivore gets additional 2/3rds of health of herbivore
+						p.get(i).Health=-1; //Carnivore has killed the herbivore
+					}
+				}
+			}
+			else if(ctr==2)
+			{
+				//Both herbivores are within the killing radius
+				int[] HerbivoreKill=new int[2];
+				int k=0;
+				for(int i=0; i<size; i++)
+				{
+					if(p.get(i) instanceof Herbivore)
+					{
+						HerbivoreKill[k++]=(i);
+					}
+				}
+				
+				//Now to check which herbivore is nearest and kill it
+				if(this.getDistance(p.get(HerbivoreKill[0]).Position[0], p.get(HerbivoreKill[0]).Position[1]) <  this.getDistance(p.get(HerbivoreKill[1]).Position[0], p.get(HerbivoreKill[1]).Position[1]))
+				{
+					this.Health = this.Health + 2*p.get(HerbivoreKill[0]).Health/3; //Carnivore gets additional 2/3rds of health of herbivore
+					p.get(HerbivoreKill[0]).Health=-1;
+				}
+				else
+				{
+					this.Health = this.Health + 2*p.get(HerbivoreKill[1]).Health/3; //Carnivore gets additional 2/3rds of health of herbivore
+					p.get(HerbivoreKill[1]).Health=-1;
+				}
+				
+			}
+			else
+			{
+				//No herbivore exists in Killing radius
+				if(curr==null) // Carnivore is not inside any grassland
+				{
+					int prob=random.nextInt(101);
+					if(prob<=92)
+					{
+						Herbivore nearest=null;
+						int min=Integer.MAX_VALUE;
+						for(int i=0; i<size; i++)
+						{
+							if(p.get(i) instanceof Herbivore)
+							{
+								if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+								{
+									nearest=(Herbivore) p.get(i);
+								}
+							}
+						}
+						int[] newCoord = this.getNewCoord(nearest.Position, 4, "Towards");
+						Position[0]=newCoord[0];
+						Position[1]=newCoord[1];
+						return;
+					}
+					else
+					{
+						this.Health=this.Health-60;
+						return;
+					}
+					
+				}
+				else // If carnivore is inside a grassland
+				{
+					int prob=random.nextInt(101);
+					if(prob <= 25)
+					{
+						this.Health=this.Health-30;
+						return;
+					}
+					else
+					{
+						Herbivore nearest=null;
+						int min=Integer.MAX_VALUE;
+						for(int i=0; i<size; i++)
+						{
+							if(p.get(i) instanceof Herbivore)
+							{
+								if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+								{
+									nearest=(Herbivore) p.get(i);
+								}
+							}
+						}
+						int[] newCoord = this.getNewCoord(nearest.Position, 2, "Towards");
+						Position[0]=newCoord[0];
+						Position[1]=newCoord[1];
+					}
+					return;
+				}
+			}
+			return;
+		}
+		
 	}
 	
 }
@@ -532,9 +668,10 @@ class World {
 	private int TotTime;
 	private int TotTurns;
 	
-	public World(int Ttime, int Tturn) {
+	public World(int Ttime, int Tturn,PQueue p) {
 		TotTime=Ttime;
 		TotTurns=Tturn;
+		Animals=p;
 	}
 	
 	public void SimulateGame(Grassland[] g) {
@@ -578,19 +715,28 @@ public class Lab4 {
 		
 		Animal[] animals={H1,H2,C1,C2};
 		//Grassland[] g={G1,G2};
-		PQueue p=new PQueue(5);
+		PQueue p=new PQueue(4);
 		p.enqueue(animals[0]);
-		System.out.println(p.get(1).TimeOfStart);
+		//System.out.println(p.get(1).TimeOfStart);
 		p.enqueue(animals[1]);
-		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart);
+		//System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart);
 		p.enqueue(animals[2]);
-		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart);
+		//System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart);
 		p.enqueue(animals[3]);
-		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart+" "+p.get(4).TimeOfStart);
+		//System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart+" "+p.get(4).TimeOfStart);
 		
-		Animal x=p.get(1);
 		p.dequeue();
-		System.out.println(x.TimeOfStart);
+		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart);
+		p.dequeue();
+		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart);
+		p.enqueue(animals[0]);
+		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart);
+		p.dequeue();
+		p.dequeue();
+		System.out.println(p.get(1).TimeOfStart);
+		
+		
+		//World W= new World(TotalTime, TotalTime, p);
 		
 		System.out.println("The simulation begins");
 	}
