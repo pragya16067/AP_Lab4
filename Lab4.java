@@ -7,9 +7,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.StringTokenizer;
 
+
+// THIS CLASS NOT USED 
+// INSTEAD USED INBUILT QUEUE
 class PQueue {
 	
 	private Animal[] Heap;
@@ -167,6 +173,7 @@ abstract class Animal {
 		Health=h;
 	}
 	
+	
 	public double getDistance(int x, int y){
 		int xd=(this.Position[0]-x);
 		int yd=(this.Position[1]-y);
@@ -244,7 +251,7 @@ abstract class Animal {
 	}
 	
 	
-	public abstract void TakeTurn(Grassland[] grasslands, PQueue p) ;
+	public abstract void TakeTurn(Grassland[] grasslands, PriorityQueue<Animal> p) ;
 }
 
 
@@ -259,10 +266,10 @@ class Herbivore extends Animal {
 	}
 	
 
-	
-	public void TakeTurn(Grassland[] grasslands, PQueue p) {
+	@Override
+	public void TakeTurn(Grassland[] grasslands, PriorityQueue<Animal> p) {
 		
-		int size=p.getSize();
+		int size=p.size();
 		curr=isInGrassland(grasslands);
 		//To find the neighbouring grassland
 		Grassland neighbour=null;
@@ -278,9 +285,10 @@ class Herbivore extends Animal {
 		}
 		
 		Boolean flag=true;
-		for(int i=1; i<=size; i++)
-		{
-			if(p.get(i) instanceof Carnivore)
+		Iterator<Animal> itr = p.iterator();
+		while (itr.hasNext()) {
+		    Animal current = itr.next();
+			if(current instanceof Carnivore)
 			{
 				//There is still a carnivore left
 				flag=false;
@@ -387,13 +395,14 @@ class Herbivore extends Animal {
 						//35% chance that herbivore moves away from nearest carnivore
 						Carnivore nearest=null;
 						int min=Integer.MAX_VALUE;
-						for(int i=1; i<=size; i++)
-						{
-							if(p.get(i) instanceof Carnivore)
+						itr = p.iterator();
+						while (itr.hasNext()) {
+						    Animal current = itr.next();
+							if(current instanceof Carnivore)
 							{
-								if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+								if(this.getDistance(current.Position[0], current.Position[1]) < min)
 								{
-									nearest=(Carnivore) p.get(i);
+									nearest=(Carnivore) current;
 								}
 							}
 						}
@@ -426,13 +435,14 @@ class Herbivore extends Animal {
 							//50% chance that it moves away from the carnivore
 							Carnivore nearest=null;
 							int min=Integer.MAX_VALUE;
-							for(int i=1; i<=size; i++)
-							{
-								if(p.get(i) instanceof Carnivore)
+							itr = p.iterator();
+							while (itr.hasNext()) {
+							    Animal current = itr.next();
+								if(current instanceof Carnivore)
 								{
-									if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+									if(this.getDistance(current.Position[0], current.Position[1]) < min)
 									{
-										nearest=(Carnivore) p.get(i);
+										nearest=(Carnivore) current;
 									}
 								}
 							}
@@ -468,13 +478,14 @@ class Herbivore extends Animal {
 						{//70% chance that Herbivore moves away from nearest carnivore
 							Carnivore nearest=null;
 							int min=Integer.MAX_VALUE;
-							for(int i=1; i<=size; i++)
-							{
-								if(p.get(i) instanceof Carnivore)
+							itr = p.iterator();
+							while (itr.hasNext()) {
+							    Animal current = itr.next();
+								if(current instanceof Carnivore)
 								{
-									if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+									if(this.getDistance(current.Position[0], current.Position[1]) < min)
 									{
-										nearest=(Carnivore) p.get(i);
+										nearest=(Carnivore) current;
 									}
 								}
 							}
@@ -513,16 +524,17 @@ class Carnivore extends Animal {
 		super(s,tStart, x, y, h);
 	}
 	
-	public void TakeTurn(Grassland[] grasslands, PQueue p) {
+	public void TakeTurn(Grassland[] grasslands, PriorityQueue<Animal> p) {
 		
-		int size=p.getSize();
+		int size=p.size();
 		curr=isInGrassland(grasslands);
 		
 		
 		Boolean flag=true;
-		for(int i=1; i<=size; i++)
-		{
-			if(p.get(i) instanceof Herbivore)
+		Iterator<Animal> itr = p.iterator();
+		while (itr.hasNext()) {
+		    Animal current = itr.next();
+			if(current instanceof Herbivore)
 			{
 				//There is still a Herbivore left
 				flag=false;
@@ -536,11 +548,12 @@ class Carnivore extends Animal {
 		{
 			//if Herbivore is within 1 unit distance of Carnivore
 			int ctr=0;
-			for(int i=1; i<=size; i++)
-			{
-				if(p.get(i) instanceof Herbivore)
+			itr = p.iterator();
+			while (itr.hasNext()) {
+			    Animal current = itr.next();
+				if(current instanceof Herbivore)
 				{
-					if( this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) <= 1 )
+					if( this.getDistance(current.Position[0], current.Position[1]) <= 1 )
 					{
 						ctr++;
 					}
@@ -551,12 +564,13 @@ class Carnivore extends Animal {
 			{
 				this.NoOfTurns=0;
 				//there is one herbivore that carnivore will kill and eat
-				for(int i=1; i<=size; i++)
-				{
-					if(p.get(i) instanceof Herbivore)
+				itr = p.iterator();
+				while (itr.hasNext()) {
+				    Animal current = itr.next();
+					if(current instanceof Herbivore)
 					{
-						this.Health = this.Health + 2*p.get(i).Health/3; //Carnivore gets additional 2/3rds of health of herbivore
-						p.get(i).Health=-1; //Carnivore has killed the herbivore
+						this.Health = this.Health + 2*current.Health/3; //Carnivore gets additional 2/3rds of health of herbivore
+						current.Health=-1; //Carnivore has killed the herbivore
 					}
 				}
 			}
@@ -564,26 +578,27 @@ class Carnivore extends Animal {
 			{
 				this.NoOfTurns=0;
 				//Both herbivores are within the killing radius
-				int[] HerbivoreKill=new int[2];
+				Herbivore[] HerbivoreKill=new Herbivore[2];
 				int k=0;
-				for(int i=1; i<=size; i++)
-				{
-					if(p.get(i) instanceof Herbivore)
+				itr = p.iterator();
+				while (itr.hasNext()) {
+				    Animal current = itr.next();
+					if(current instanceof Herbivore)
 					{
-						HerbivoreKill[k++]=(i);
+						HerbivoreKill[k++]=(Herbivore) current;
 					}
 				}
 				
 				//Now to check which herbivore is nearest and kill it
-				if(this.getDistance(p.get(HerbivoreKill[0]).Position[0], p.get(HerbivoreKill[0]).Position[1]) <  this.getDistance(p.get(HerbivoreKill[1]).Position[0], p.get(HerbivoreKill[1]).Position[1]))
+				if(this.getDistance((HerbivoreKill[0]).Position[0], (HerbivoreKill[0]).Position[1]) <  this.getDistance((HerbivoreKill[1]).Position[0], (HerbivoreKill[1]).Position[1]))
 				{
-					this.Health = this.Health + 2*p.get(HerbivoreKill[0]).Health/3; //Carnivore gets additional 2/3rds of health of herbivore
-					p.get(HerbivoreKill[0]).Health=-1;
+					this.Health = this.Health + 2*(HerbivoreKill[0]).Health/3; //Carnivore gets additional 2/3rds of health of herbivore
+					(HerbivoreKill[0]).Health=-1;//Carnivore kills the Herbivore
 				}
 				else
 				{
-					this.Health = this.Health + 2*p.get(HerbivoreKill[1]).Health/3; //Carnivore gets additional 2/3rds of health of herbivore
-					p.get(HerbivoreKill[1]).Health=-1;
+					this.Health = this.Health + 2*(HerbivoreKill[1]).Health/3; //Carnivore gets additional 2/3rds of health of herbivore
+					(HerbivoreKill[1]).Health=-1;
 				}
 				
 			}
@@ -593,11 +608,12 @@ class Carnivore extends Animal {
 				//
 				//If there exists no herbivore within 5 units of this carnivore, increase its waste turns and if these turns are greater than 7 start decreasing health by 6
 				ctr=0;
-				for(int i=1; i<=size; i++)
-				{
-					if(p.get(i) instanceof Herbivore)
+				itr = p.iterator();
+				while (itr.hasNext()) {
+				    Animal current = itr.next();
+					if(current instanceof Herbivore)
 					{
-						if( this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) <= 5 )
+						if( this.getDistance(current.Position[0], current.Position[1]) <= 5 )
 						{
 							ctr++;
 						}
@@ -625,13 +641,14 @@ class Carnivore extends Animal {
 					{
 						Herbivore nearest=null;
 						int min=Integer.MAX_VALUE;
-						for(int i=1; i<=size; i++)
-						{
-							if(p.get(i) instanceof Herbivore)
+						itr = p.iterator();
+						while (itr.hasNext()) {
+						    Animal current = itr.next();
+							if(current instanceof Herbivore)
 							{
-								if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+								if(this.getDistance(current.Position[0], current.Position[1]) < min)
 								{
-									nearest=(Herbivore) p.get(i);
+									nearest=(Herbivore) current;
 								}
 							}
 						}
@@ -659,13 +676,14 @@ class Carnivore extends Animal {
 					{
 						Herbivore nearest=null;
 						int min=Integer.MAX_VALUE;
-						for(int i=1; i<=size; i++)
-						{
-							if(p.get(i) instanceof Herbivore)
+						itr = p.iterator();
+						while (itr.hasNext()) {
+						    Animal current = itr.next();
+							if(current instanceof Herbivore)
 							{
-								if(this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) < min)
+								if(this.getDistance(current.Position[0], current.Position[1]) < min)
 								{
-									nearest=(Herbivore) p.get(i);
+									nearest=(Herbivore) current;
 								}
 							}
 						}
@@ -725,11 +743,11 @@ class Grassland {
 
 //A class World to run the simulation
 class World {
-	private PQueue Animals;
+	private PriorityQueue<Animal> Animals;
 	private int TotTime;
 	private int TotTurns;
 	
-	public World(int Ttime, int Tturn,PQueue p) {
+	public World(int Ttime, int Tturn,PriorityQueue<Animal> p) {
 		TotTime=Ttime;
 		TotTurns=Tturn;
 		Animals=p;
@@ -737,11 +755,12 @@ class World {
 	
 	public int getMaxTime() {
 		int max=0;
-		for (int i=1; i<=Animals.getSize(); i++)
-		{
-			if(Animals.get(i).TimeOfStart > max)
+		Iterator<Animal> itr = Animals.iterator();
+		while (itr.hasNext()) {
+		    Animal current = itr.next();
+			if(current.TimeOfStart > max)
 			{
-				max = Animals.get(i).TimeOfStart;
+				max = current.TimeOfStart;
 			}
 		}
 		return max;
@@ -753,8 +772,7 @@ class World {
 		//int time=0;
 		while(!Animals.isEmpty() && turns<TotTurns)
 		{
-			Animal a=Animals.get(1);
-			Animals.dequeue();
+			Animal a=Animals.remove();
 			if(a.Health > 0)
 			{
 				System.out.println("The animal is "+a.Name);
@@ -766,7 +784,7 @@ class World {
 					int LastTimeStamp=this.getMaxTime();
 					a.TimeOfStart=r.nextInt(TotTime - LastTimeStamp) + LastTimeStamp;
 					if(a.TimeOfStart != TotTime-1) {
-						Animals.enqueue(a);
+						Animals.add(a);
 					}
 				}
 				else
@@ -779,11 +797,64 @@ class World {
 	}
 }
 
+class AnimalCompare implements Comparator<Animal> {
+	
+	public int compare(Animal A1, Animal A2) {
+		if(A1.TimeOfStart > A2.TimeOfStart)
+		{
+			return 1;
+		}
+		else if(A1.TimeOfStart < A2.TimeOfStart)
+		{
+			return -1;
+		}
+		else
+		{
+			if(A1.Health < A2.Health)
+			{
+				return 1;
+			}
+			else if(A1.Health > A2.Health)
+				return -1;
+			else
+			{
+				if(A1 instanceof Herbivore && A2 instanceof Carnivore)
+				{
+					return -1;
+				}
+				else if(A1 instanceof Carnivore && A2 instanceof Herbivore)
+				{
+					return 1;
+				}
+				else //Both are of same type
+				{
+					if(dist(A1.Position) < dist(A2.Position))
+					{
+						return -1;
+					}
+					else
+					{
+						return 1;
+					}
+				}
+			}
+		}
+	}
+	
+	public double dist(int[] p) {
+		return Math.sqrt(p[0]*p[0] + p[1]*p[1]);
+	}
+}
+
 
 public class Lab4 {
 
 	public static void main(String[] args) throws IOException {
 		Reader.init(System.in);
+		
+		Comparator<Animal> compare_animals=new AnimalCompare();
+		PriorityQueue<Animal> p=new PriorityQueue<Animal>(4,compare_animals);
+		
 		System.out.println("Enter Total Final Time for Simulation:");
 		int TotalTime=Reader.nextInt();
 		System.out.println("Enter x, y centre, radius and Grass Available for First Grassland:");
@@ -808,26 +879,14 @@ public class Lab4 {
 		
 		Animal[] animals={H1,H2,C1,C2};
 		Grassland[] g={G1,G2};
-		PQueue p=new PQueue(4);
-		p.enqueue(animals[0]);
+		p.add(animals[0]);
 		//System.out.println(p.get(1).TimeOfStart);
-		p.enqueue(animals[1]);
+		p.add(animals[1]);
 		//System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart);
-		p.enqueue(animals[2]);
+		p.add(animals[2]);
 		//System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart);
-		p.enqueue(animals[3]);
+		p.add(animals[3]);
 		//System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart+" "+p.get(4).TimeOfStart);
-		
-		/*p.dequeue();
-		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart);
-		p.dequeue();
-		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart);
-		p.enqueue(animals[0]);
-		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart);
-		p.dequeue();
-		p.dequeue();
-		System.out.println(p.get(1).TimeOfStart);
-		*/
 		
 		World W= new World(TotalTime, TotalTime, p);
 		
