@@ -112,7 +112,7 @@ class PQueue {
 				Heap[max]=Heap[i];
 				Heap[i]=temp;
 				i=max;
-				//heap=heapify(heap,min);
+				
 			}
 			else
 			{
@@ -125,31 +125,21 @@ class PQueue {
 	public void enqueue(Animal element)
 	    {
 	        Heap[++size] = element;
-	        //int current = size;
-	        //int parent = current / 2;
 	 
 	        heapify(FRONT);
-	        /*while(Heap[current].TimeOfStart > Heap[parent].TimeOfStart)
-	        {
-	            swap(current,parent);
-	            current = parent;
-	            parent = current / 2;
-	        }*/
+	        
 	    }
 	
  
     public void dequeue()
     {
-        //Teacher popped = Heap[FRONT];
     	if(size==1)
     	{
-    		//Heap[FRONT]=new Teacher(0,0,0);
     		size--;
     	}
     	else
     	{
     		Heap[FRONT] = Heap[size];
-    		//Heap[size] = new Teacher(0,0,0);
     		size--;
     		heapify(FRONT);
     	}
@@ -193,11 +183,14 @@ abstract class Animal {
 		}
 		else
 		{
-			double tan=(dest[1]-this.Position[1]) / (dest[0]-this.Position[0]);
-			cos=Math.sqrt(1/(1+tan*tan));
-			sin=Math.sqrt(1-cos*cos);
+			double tan=(dest[1]-this.Position[1]) / (dest[0]-this.Position[0]); //gets the slope of the line
+			cos=Math.sqrt(1/(1+tan*tan));//value of cosTheta
+			sin=Math.sqrt(1-cos*cos);// value of sinTheta
 		}
 		
+		
+		//X coordinate increases or decreases by formula cosTheta = base/distance
+		//Y coordinate increases or decreases by formula cosTheta = perpendicular/distance
 		int newX1=(int) Math.round(this.Position[0] + (distance*cos));
 		int newY1=(int) Math.round(this.Position[1] + (distance*sin));
 		int newX2=(int) Math.round(this.Position[0] - (distance*cos));
@@ -206,6 +199,7 @@ abstract class Animal {
 		
 		if(s.equals("Towards"))
 		{
+			//Find the point nearer to destination
 			if(this.getDistance(newX1,newY1) < this.getDistance(newX2,newY2))
 			{
 				ans[0]=newX1;
@@ -219,6 +213,7 @@ abstract class Animal {
 		}
 		else
 		{
+			//Find the point further from destination
 			if(this.getDistance(newX1,newY1) > this.getDistance(newX2,newY2))
 			{
 				ans[0]=newX1;
@@ -236,6 +231,7 @@ abstract class Animal {
 	}
 	
 	public Grassland isInGrassland(Grassland[] g) {
+		//Returns the Grassland to which an animal belongs
 		for(int i=0; i<2; i++)
 		{
 			if(Position[0] < (g[i].getx()+g[i].getr()) && Position[0]> (g[i].getx()-g[i].getr()) && Position[1] < (g[i].gety()+g[i].getr()) && Position[1]> (g[i].gety()-g[i].getr()))
@@ -301,7 +297,7 @@ class Herbivore extends Animal {
 				if(curr==null) //Not in any grassland
 				{
 					this.NoOfTurns=this.NoOfTurns+1;
-					//if the Herbivore has been outside a grassland for more than 7 of its own turns then decresing its health by 5
+					//if the Herbivore has been outside a grassland for more than 7 of its own turns then decreasing its health by 5
 					if(NoOfTurns >= 8)
 					{
 						this.Health=this.Health-5;
@@ -313,6 +309,7 @@ class Herbivore extends Animal {
 			{
 				if (curr!=null)//If the herbivore is inside a grassland;
 				{
+					this.NoOfTurns=0; //if herbivore is inside a grassland then reset number of turns back to 0
 					//Move 5 units towards the neighbouring grassland
 					int[] dest={neighbour.getx(),neighbour.gety()};
 					int[] newC=getNewCoord(dest, 5, "Towards");
@@ -321,10 +318,10 @@ class Herbivore extends Animal {
 					this.Health=this.Health-25;
 					
 				}
-				else //If the herbivore is not inside any grassland then move to the nearest
+				else //If the herbivore is not inside any grassland then move to the nearest one
 				{
 					this.NoOfTurns=this.NoOfTurns+1;
-					//if the Herbivore has been outside a grassland for more than 7 of its own turns then decresing its health by 5
+					//if the Herbivore has been outside a grassland for more than 7 of its own turns then decreasing its health by 5
 					if(NoOfTurns >= 8)
 					{
 						this.Health=this.Health-5;
@@ -410,6 +407,7 @@ class Herbivore extends Animal {
 			
 			else //The Herbivore is already inside a Grassland
 			{
+				this.NoOfTurns=0; //if herbivore is inside a grassland then reset number of turns back to 0
 				if(curr.getGrassAvbl() >= this.maxGrassCap)
 				{
 					int prob=random.nextInt(101);
@@ -428,7 +426,7 @@ class Herbivore extends Animal {
 							//50% chance that it moves away from the carnivore
 							Carnivore nearest=null;
 							int min=Integer.MAX_VALUE;
-							for(int i=0; i<size; i++)
+							for(int i=1; i<=size; i++)
 							{
 								if(p.get(i) instanceof Carnivore)
 								{
@@ -470,7 +468,7 @@ class Herbivore extends Animal {
 						{//70% chance that Herbivore moves away from nearest carnivore
 							Carnivore nearest=null;
 							int min=Integer.MAX_VALUE;
-							for(int i=0; i<size; i++)
+							for(int i=1; i<=size; i++)
 							{
 								if(p.get(i) instanceof Carnivore)
 								{
@@ -516,7 +514,7 @@ class Carnivore extends Animal {
 	}
 	
 	public void TakeTurn(Grassland[] grasslands, PQueue p) {
-		this.NoOfTurns=this.NoOfTurns+1;
+		
 		int size=p.getSize();
 		curr=isInGrassland(grasslands);
 		
@@ -551,6 +549,7 @@ class Carnivore extends Animal {
 			
 			if(ctr==1)
 			{
+				this.NoOfTurns=0;
 				//there is one herbivore that carnivore will kill and eat
 				for(int i=1; i<=size; i++)
 				{
@@ -563,6 +562,7 @@ class Carnivore extends Animal {
 			}
 			else if(ctr==2)
 			{
+				this.NoOfTurns=0;
 				//Both herbivores are within the killing radius
 				int[] HerbivoreKill=new int[2];
 				int k=0;
@@ -611,6 +611,10 @@ class Carnivore extends Animal {
 					{
 						this.Health=this.Health-6;
 					}
+				}
+				else
+				{
+					this.NoOfTurns=0;
 				}
 				
 				
