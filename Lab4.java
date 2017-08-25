@@ -23,7 +23,7 @@ class PQueue {
 	    this.maxsize = maxsize;
 	    this.size = 0;
 	    Heap = new Animal[this.maxsize + 1];
-	    Heap[0] = new Herbivore(Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE);
+	    Heap[0] = new Herbivore("",Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE);
 	    
 	}
 	
@@ -160,14 +160,17 @@ class PQueue {
 
 
 abstract class Animal {
+	protected String Name;
 	protected int TimeOfStart;
 	protected int Position[]=new int[2];
-	protected int Health;
+	protected double Health;
 	protected Grassland curr;
+	protected int NoOfTurns=0;
 	public Random random=new Random();
 	
-	public Animal(int tStart, int x, int y, int h)
+	public Animal(String s,int tStart, int x, int y, double h)
 	{
+		Name=s;
 		TimeOfStart = tStart;
 		Position[0]=x;
 		Position[1]=y;
@@ -181,9 +184,19 @@ abstract class Animal {
 	}
 	
 	public int[] getNewCoord(int[] dest, int distance, String s) {
-		double tan=(dest[1]-this.Position[1]) / (dest[0]-this.Position[0]);
-		double cos=Math.sqrt(1/(1+tan*tan));
-		double sin=Math.sqrt(1-cos*cos);
+		double cos;
+		double sin;
+		if(dest[0]==this.Position[0]) //slope is 90degrees
+		{
+			cos=0;
+			sin=1;
+		}
+		else
+		{
+			double tan=(dest[1]-this.Position[1]) / (dest[0]-this.Position[0]);
+			cos=Math.sqrt(1/(1+tan*tan));
+			sin=Math.sqrt(1-cos*cos);
+		}
 		
 		int newX1=(int) Math.round(this.Position[0] + (distance*cos));
 		int newY1=(int) Math.round(this.Position[1] + (distance*sin));
@@ -244,28 +257,32 @@ class Herbivore extends Animal {
 	
 	
 	
-	public Herbivore( int x, int y,int tStart, int h, int grass) {
-		super(tStart, x, y, h);
+	public Herbivore( String s, int x, int y,int tStart, int h, int grass) {
+		super(s,tStart, x, y, h);
 		this.maxGrassCap=grass;
 	}
 	
 
 	
 	public void TakeTurn(Grassland[] grasslands, PQueue p) {
+		this.NoOfTurns=this.NoOfTurns+1;
 		int size=p.getSize();
 		curr=isInGrassland(grasslands);
 		//To find the neighbouring grassland
 		Grassland neighbour=null;
-		for(int i=0;i<2; i++)
+		if(curr!=null)
 		{
-			if(!grasslands[i].equals(curr))
+			for(int i=0;i<2; i++)
 			{
-				neighbour=grasslands[i];
+				if(!grasslands[i].equals(curr))
+				{
+					neighbour=grasslands[i];
+				}
 			}
 		}
 		
 		Boolean flag=true;
-		for(int i=0; i<size; i++)
+		for(int i=1; i<=size; i++)
 		{
 			if(p.get(i) instanceof Carnivore)
 			{
@@ -353,7 +370,7 @@ class Herbivore extends Animal {
 						//35% chance that herbivore moves away from nearest carnivore
 						Carnivore nearest=null;
 						int min=Integer.MAX_VALUE;
-						for(int i=0; i<size; i++)
+						for(int i=1; i<=size; i++)
 						{
 							if(p.get(i) instanceof Carnivore)
 							{
@@ -456,7 +473,7 @@ class Herbivore extends Animal {
 				
 				//Code to check if the Herbivore has now moved to a new grassland now, and decrease health if that is the case
 				Grassland change=isInGrassland(grasslands);
-				if(!change.equals(curr))
+				if(change!=null && curr!=null && !change.equals(curr))
 				{
 					this.Health=this.Health-25;
 					curr=change;
@@ -471,25 +488,18 @@ class Herbivore extends Animal {
 class Carnivore extends Animal {
 	
 	
-	public Carnivore( int x, int y,int tStart, int h) {
-		super(tStart, x, y, h);
+	public Carnivore( String s,int x, int y,int tStart, int h) {
+		super(s,tStart, x, y, h);
 	}
 	
 	public void TakeTurn(Grassland[] grasslands, PQueue p) {
+		this.NoOfTurns=this.NoOfTurns+1;
 		int size=p.getSize();
 		curr=isInGrassland(grasslands);
-		//To find the neighbouring grassland
-		Grassland neighbour=null;
-		for(int i=0;i<2; i++)
-		{
-			if(!grasslands[i].equals(curr))
-			{
-				neighbour=grasslands[i];
-			}
-		}
+		
 		
 		Boolean flag=true;
-		for(int i=0; i<size; i++)
+		for(int i=1; i<=size; i++)
 		{
 			if(p.get(i) instanceof Herbivore)
 			{
@@ -505,7 +515,7 @@ class Carnivore extends Animal {
 		{
 			//if Herbivore is within 1 unit distance of Carnivore
 			int ctr=0;
-			for(int i=0; i<size; i++)
+			for(int i=1; i<=size; i++)
 			{
 				if(p.get(i) instanceof Herbivore)
 				{
@@ -519,7 +529,7 @@ class Carnivore extends Animal {
 			if(ctr==1)
 			{
 				//there is one herbivore that carnivore will kill and eat
-				for(int i=0; i<size; i++)
+				for(int i=1; i<=size; i++)
 				{
 					if(p.get(i) instanceof Herbivore)
 					{
@@ -533,7 +543,7 @@ class Carnivore extends Animal {
 				//Both herbivores are within the killing radius
 				int[] HerbivoreKill=new int[2];
 				int k=0;
-				for(int i=0; i<size; i++)
+				for(int i=1; i<=size; i++)
 				{
 					if(p.get(i) instanceof Herbivore)
 					{
@@ -564,7 +574,7 @@ class Carnivore extends Animal {
 					{
 						Herbivore nearest=null;
 						int min=Integer.MAX_VALUE;
-						for(int i=0; i<size; i++)
+						for(int i=1; i<=size; i++)
 						{
 							if(p.get(i) instanceof Herbivore)
 							{
@@ -598,7 +608,7 @@ class Carnivore extends Animal {
 					{
 						Herbivore nearest=null;
 						int min=Integer.MAX_VALUE;
-						for(int i=0; i<size; i++)
+						for(int i=1; i<=size; i++)
 						{
 							if(p.get(i) instanceof Herbivore)
 							{
@@ -674,14 +684,44 @@ class World {
 		Animals=p;
 	}
 	
-	public void SimulateGame(Grassland[] g) {
-		int turns=0;
-		int time=0;
-		while(!Animals.isEmpty() && turns<TotTime)
+	public int getMaxTime() {
+		int max=0;
+		for (int i=1; i<=Animals.getSize(); i++)
 		{
-			Animal a=Animals.get(0);
+			if(Animals.get(i).TimeOfStart > max)
+			{
+				max = Animals.get(i).TimeOfStart;
+			}
+		}
+		return max;
+	}
+	
+	public void SimulateGame(Grassland[] g) {
+		Random r=new Random();
+		int turns=0;
+		//int time=0;
+		while(!Animals.isEmpty() && turns<TotTurns)
+		{
+			Animal a=Animals.get(1);
 			Animals.dequeue();
-			a.TakeTurn(g,Animals);
+			if(a.Health > 0)
+			{
+				System.out.println("The animal is "+a.Name);
+				a.TakeTurn(g,Animals);
+				if(a.Health > 0)
+				{
+					System.out.println("It's Health after taking turn is "+a.Health);
+					//Give the animal a new time of start 
+					int LastTimeStamp=this.getMaxTime();
+					a.TimeOfStart=r.nextInt(TotTime - LastTimeStamp) + LastTimeStamp;
+					Animals.enqueue(a);
+				}
+				else
+				{
+					System.out.println("It is Dead");
+				}
+				turns++;
+			}
 		}
 	}
 }
@@ -691,30 +731,30 @@ public class Lab4 {
 
 	public static void main(String[] args) throws IOException {
 		Reader.init(System.in);
-		/*System.out.println("Enter Total Final Time for Simulation:");
+		System.out.println("Enter Total Final Time for Simulation:");
 		int TotalTime=Reader.nextInt();
 		System.out.println("Enter x, y centre, radius and Grass Available for First Grassland:");
 		Grassland G1=new Grassland(Reader.nextInt(),Reader.nextInt(),Reader.nextInt(),Reader.nextInt());
 		System.out.println("Enter x, y centre, radius and Grass Available for Second Grassland:");
 		Grassland G2=new Grassland(Reader.nextInt(),Reader.nextInt(),Reader.nextInt(),Reader.nextInt());
-		*/
+		
 		System.out.println("Enter Health and Grass Capacity for Herbivores:");
 		int Hhealth=Reader.nextInt();
 		int HG=Reader.nextInt();
 		System.out.println("Enter x, y position and timestamp for First Herbivore:");
-		Herbivore H1=new Herbivore(Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Hhealth, HG);
+		Herbivore H1=new Herbivore("First Herbivore",Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Hhealth, HG);
 		System.out.println("Enter x, y position and timestamp for Second Herbivore:");
-		Herbivore H2=new Herbivore(Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Hhealth, HG);
+		Herbivore H2=new Herbivore("Second Herbivore",Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Hhealth, HG);
 		
 		System.out.println("Enter Health for Carnivores:");
 		int Chealth=Reader.nextInt();
 		System.out.println("Enter x, y position and timestamp for First Carnivore:");
-		Carnivore C1=new Carnivore(Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Chealth);
+		Carnivore C1=new Carnivore("First Carnivore",Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Chealth);
 		System.out.println("Enter x, y position and timestamp for Second Carnivore:");
-		Carnivore C2=new Carnivore(Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Chealth);
+		Carnivore C2=new Carnivore("Second Carnivore",Reader.nextInt(), Reader.nextInt(),Reader.nextInt(), Chealth);
 		
 		Animal[] animals={H1,H2,C1,C2};
-		//Grassland[] g={G1,G2};
+		Grassland[] g={G1,G2};
 		PQueue p=new PQueue(4);
 		p.enqueue(animals[0]);
 		//System.out.println(p.get(1).TimeOfStart);
@@ -725,7 +765,7 @@ public class Lab4 {
 		p.enqueue(animals[3]);
 		//System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart+" "+p.get(4).TimeOfStart);
 		
-		p.dequeue();
+		/*p.dequeue();
 		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart+" "+p.get(3).TimeOfStart);
 		p.dequeue();
 		System.out.println(p.get(1).TimeOfStart+" "+p.get(2).TimeOfStart);
@@ -734,11 +774,13 @@ public class Lab4 {
 		p.dequeue();
 		p.dequeue();
 		System.out.println(p.get(1).TimeOfStart);
+		*/
 		
-		
-		//World W= new World(TotalTime, TotalTime, p);
+		World W= new World(TotalTime, TotalTime, p);
 		
 		System.out.println("The simulation begins");
+		
+		W.SimulateGame(g);
 	}
 }
 
