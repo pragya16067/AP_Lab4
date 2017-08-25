@@ -304,7 +304,7 @@ class Herbivore extends Animal {
 					//if the Herbivore has been outside a grassland for more than 7 of its own turns then decresing its health by 5
 					if(NoOfTurns >= 8)
 					{
-						this.Health=this.Health-1;
+						this.Health=this.Health-5;
 					}
 				}
 				return;
@@ -327,7 +327,7 @@ class Herbivore extends Animal {
 					//if the Herbivore has been outside a grassland for more than 7 of its own turns then decresing its health by 5
 					if(NoOfTurns >= 8)
 					{
-						this.Health=this.Health-1;
+						this.Health=this.Health-5;
 					}
 					Grassland nearest;
 					if(this.getDistance(grasslands[0].getx(), grasslands[0].gety()) < this.getDistance(grasslands[1].getx(), grasslands[1].gety())) 
@@ -355,10 +355,10 @@ class Herbivore extends Animal {
 			if(curr==null) //Herbivore is not inside any grassland
 			{
 				this.NoOfTurns=this.NoOfTurns+1;
-				//if the Herbivore has been outside a grassland for more than 7 of its own turns then decresing its health by 5
+				//if the Herbivore has been outside a grassland for more than 7 of its own turns then decreasing its health by 5
 				if(NoOfTurns >= 8)
 				{
-					this.Health=this.Health-1;
+					this.Health=this.Health-5;
 				}
 				int prob= random.nextInt(101);
 				if(prob<=5) //5% chance that herbivore will stay at its position
@@ -456,9 +456,12 @@ class Herbivore extends Animal {
 					int prob=random.nextInt(101);
 					if(prob < 20)
 					{
-						curr.setGAvbl(0);
-						//Increase health by 20% of original
-						this.Health = 6 / 5 * this.Health;
+						if(curr.getGrassAvbl()!=0)
+						{
+							curr.setGAvbl(0);
+							//Increase health by 20% of original
+							this.Health = 6 / 5 * this.Health;
+						}
 					}
 					else
 					{
@@ -588,7 +591,7 @@ class Carnivore extends Animal {
 			{
 				//No herbivore exists in Killing radius
 				//
-				//If there exists no herbivore within 5 units of this carnivore increase its waste turns and if these turns are greater than 7 start decreasing health by 6
+				//If there exists no herbivore within 5 units of this carnivore, increase its waste turns and if these turns are greater than 7 start decreasing health by 6
 				ctr=0;
 				for(int i=1; i<=size; i++)
 				{
