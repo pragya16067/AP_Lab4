@@ -23,7 +23,7 @@ class PQueue {
 	    this.maxsize = maxsize;
 	    this.size = 0;
 	    Heap = new Animal[this.maxsize + 1];
-	    Heap[0] = new Herbivore("",Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE);
+	    Heap[0] = new Herbivore("",Integer.MIN_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE,Integer.MAX_VALUE);
 	    
 	}
 	
@@ -65,7 +65,7 @@ class PQueue {
 			{
 				max=r;
 			}
-			if(max==i) {
+			if(max==i && Heap[l].TimeOfStart == Heap[i].TimeOfStart && Heap[r].TimeOfStart == Heap[max].TimeOfStart) {
 				if(l<=heapsize && Heap[l].Health > Heap[i].Health)
 				{
 					max=l;
@@ -74,7 +74,7 @@ class PQueue {
 				{
 					max=r;
 				}
-				if(max==i)
+				if(max==i && Heap[l].Health == Heap[i].Health && Heap[r].Health == Heap[max].Health)
 				{
 					if(l<=heapsize && Heap[l] instanceof Herbivore && Heap[i] instanceof Carnivore)
 					{
@@ -84,7 +84,7 @@ class PQueue {
 					{
 						max=r;
 					}
-					if(max==i) {
+					if(max==i && Heap[l].getClass()==Heap[i].getClass() && Heap[r].getClass()==Heap[i].getClass()) {
 						if(l<=heapsize && Heap[l] instanceof Herbivore && Heap[i] instanceof Herbivore && dist(Heap[l].Position) < dist(Heap[i].Position));
 						{
 							max=l;
@@ -93,7 +93,7 @@ class PQueue {
 						{
 							max=r;
 						}
-						if(max==i) {
+						if(max==i && Heap[l] instanceof Carnivore && Heap[l].getClass()==Heap[i].getClass() && Heap[r].getClass()==Heap[i].getClass()) {
 							if(l<=heapsize && Heap[l] instanceof Carnivore && Heap[i] instanceof Carnivore && dist(Heap[l].Position) < dist(Heap[i].Position));
 							{
 								max=l;
@@ -265,7 +265,7 @@ class Herbivore extends Animal {
 
 	
 	public void TakeTurn(Grassland[] grasslands, PQueue p) {
-		this.NoOfTurns=this.NoOfTurns+1;
+		
 		int size=p.getSize();
 		curr=isInGrassland(grasslands);
 		//To find the neighbouring grassland
@@ -298,7 +298,15 @@ class Herbivore extends Animal {
 			int prob=random.nextInt(101);
 			if(prob<=50) //50% chance that it stays at its own position
 			{
-				///WHAT SHOULD WE RETURN HERE
+				if(curr==null) //Not in any grassland
+				{
+					this.NoOfTurns=this.NoOfTurns+1;
+					//if the Herbivore has been outside a grassland for more than 7 of its own turns then decresing its health by 5
+					if(NoOfTurns >= 8)
+					{
+						this.Health=this.Health-1;
+					}
+				}
 				return;
 			}
 			else
@@ -315,6 +323,12 @@ class Herbivore extends Animal {
 				}
 				else //If the herbivore is not inside any grassland then move to the nearest
 				{
+					this.NoOfTurns=this.NoOfTurns+1;
+					//if the Herbivore has been outside a grassland for more than 7 of its own turns then decresing its health by 5
+					if(NoOfTurns >= 8)
+					{
+						this.Health=this.Health-1;
+					}
 					Grassland nearest;
 					if(this.getDistance(grasslands[0].getx(), grasslands[0].gety()) < this.getDistance(grasslands[1].getx(), grasslands[1].gety())) 
 					{
@@ -340,6 +354,12 @@ class Herbivore extends Animal {
 		{
 			if(curr==null) //Herbivore is not inside any grassland
 			{
+				this.NoOfTurns=this.NoOfTurns+1;
+				//if the Herbivore has been outside a grassland for more than 7 of its own turns then decresing its health by 5
+				if(NoOfTurns >= 8)
+				{
+					this.Health=this.Health-1;
+				}
 				int prob= random.nextInt(101);
 				if(prob<=5) //5% chance that herbivore will stay at its position
 				{
@@ -567,6 +587,30 @@ class Carnivore extends Animal {
 			else
 			{
 				//No herbivore exists in Killing radius
+				//
+				//If there exists no herbivore within 5 units of this carnivore increase its waste turns and if these turns are greater than 7 start decreasing health by 6
+				ctr=0;
+				for(int i=1; i<=size; i++)
+				{
+					if(p.get(i) instanceof Herbivore)
+					{
+						if( this.getDistance(p.get(i).Position[0], p.get(i).Position[1]) <= 5 )
+						{
+							ctr++;
+						}
+					}
+				}
+				
+				if(ctr==0)
+				{
+					this.NoOfTurns = this.NoOfTurns +1;
+					if(this.NoOfTurns >= 8)
+					{
+						this.Health=this.Health-6;
+					}
+				}
+				
+				
 				if(curr==null) // Carnivore is not inside any grassland
 				{
 					int prob=random.nextInt(101);
@@ -714,7 +758,9 @@ class World {
 					//Give the animal a new time of start 
 					int LastTimeStamp=this.getMaxTime();
 					a.TimeOfStart=r.nextInt(TotTime - LastTimeStamp) + LastTimeStamp;
-					Animals.enqueue(a);
+					if(a.TimeOfStart != TotTime-1) {
+						Animals.enqueue(a);
+					}
 				}
 				else
 				{
